@@ -2,6 +2,7 @@
 import Card from "./components/Card.jsx";
 import UserGreeting from "./components/UserGreeting.jsx";
 import List from "./components/List/List.jsx";
+import Button from "./components/Button/Button.jsx"
 
 function App() {
   const movies = [
@@ -24,6 +25,9 @@ function App() {
       <Card name="Card Two"/>
       <Card name="Card Three"/>
       <Card name="Anonymous"/>
+      <hr />
+      <Button/>
+      <hr />
       <List items={movies} category="🎬 Movies"/>
     </>
   );
