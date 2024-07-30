@@ -1,10 +1,10 @@
-import Card from "./Card"
+import Button from "./components/Button"
 
 function App() {
 
   return(
     <>
-     <Card/>
+     <Button/>
 
     </>
   )

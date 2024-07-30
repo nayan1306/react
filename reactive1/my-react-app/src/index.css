@@ -38,6 +38,7 @@
   text-align: center; /* Centered text */
   background: -webkit-linear-gradient(45deg, #ff6ec4, #7873f5); /* Gradient text */
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Subtle shadow effect */
   padding: 10px; /* Padding around the text */
@@ -48,4 +49,31 @@
 
 .p-in-card:hover {
   transform: scale(1.05); /* Slightly enlarge on hover */
+}
+
+.button1 {
+  font-family: 'Arial', sans-serif; /* Stylish font */
+  font-size: 1em; /* Standard size */
+  font-weight: bold; /* Bold text */
+  color: white; /* Text color */
+  background: linear-gradient(45deg, #ff6ec4, #7873f5); /* Gradient background */
+  border: none; /* Remove default border */
+  border-radius: 15px; /* Rounded corners */
+  padding: 10px 20px; /* Padding for size */
+  margin: 10px; /* Margin around the button */
+  cursor: pointer; /* Pointer cursor on hover */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06); /* Subtle shadow for depth */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition effects */
+  text-transform: uppercase; /* Uppercase text */
+  letter-spacing: 1px; /* Spacing between letters */
+}
+
+.button1:hover {
+  transform: translateY(-3px); /* Slightly lift the button on hover */
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2), 0 5px 10px rgba(0, 0, 0, 0.1); /* Increase shadow on hover */
+}
+
+.button1:active {
+  transform: translateY(1px); /* Slightly push the button on click */
+  box-shadow: 0 5px 8px rgba(0, 0, 0, 0.15), 0 3px 5px rgba(0, 0, 0, 0.1); /* Adjust shadow on click */
 }
