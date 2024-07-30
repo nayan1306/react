@@ -3,6 +3,7 @@ import Card from "./components/Card.jsx";
 import UserGreeting from "./components/UserGreeting.jsx";
 import List from "./components/List/List.jsx";
 import Button from "./components/Button/Button.jsx"
+import Counter  from "./components/Counter/Counter.jsx";
 
 function App() {
   const movies = [
@@ -27,6 +28,8 @@ function App() {
       <Card name="Anonymous"/>
       <hr />
       <Button/>
+      <hr />
+      <Counter/>
       <hr />
       <List items={movies} category="🎬 Movies"/>
     </>
