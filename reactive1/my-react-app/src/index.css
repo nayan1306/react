@@ -18,6 +18,7 @@
   border: 1px solid rgb(255, 255, 255);
   border-radius: 10px;
   min-width: 100px; /* reduced from 150px */
+  max-width: 250px;
   margin: 10px; 
   text-align: center;
   display: inline-block;
@@ -45,6 +46,7 @@
   margin: 10px 0; /* Margin around the paragraph */
   border-radius: 5px; /* Rounded corners */
   transition: transform 0.3s ease-in-out; /* Smooth transform effect on hover */
+  
 }
 
 .p-in-card:hover {
