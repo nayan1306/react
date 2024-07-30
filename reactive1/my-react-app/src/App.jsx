@@ -4,6 +4,7 @@ import UserGreeting from "./components/UserGreeting.jsx";
 import List from "./components/List/List.jsx";
 import Button from "./components/Button/Button.jsx"
 import Counter  from "./components/Counter/Counter.jsx";
+import OnChange from "./components/OnChange/OnChange.jsx";
 
 function App() {
   const movies = [
@@ -30,6 +31,8 @@ function App() {
       <Button/>
       <hr />
       <Counter/>
+      <hr />
+      <OnChange/>
       <hr />
       <List items={movies} category="🎬 Movies"/>
     </>
