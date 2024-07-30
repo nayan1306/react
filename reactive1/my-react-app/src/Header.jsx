@@ -4,7 +4,17 @@ function Header(){
     return(
         <header>
             <h1>This is a cool websie</h1>
+            <nav>
+                <ul>
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Service</a></li>
+                    <li><a href="#">Help</a></li>
+                </ul>
+            </nav>
+            <hr />
         </header>
+        
     )
 
 }
