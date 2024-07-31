@@ -245,7 +245,7 @@
 /* visual tweaks */
 
 .leaflet-container {
-	background: #ddd;
+	background: #854747;
 	outline: 0;
 	}
 .leaflet-container a {
@@ -389,7 +389,7 @@
 
 /* Default icon URLs */
 .leaflet-default-icon-path {
-	background-image: url(images/marker-icon.png);
+	background-image: url(./images/marker-icon.png);
 	}
 
 
@@ -633,3 +633,4 @@
 	margin-left: -12px;
 	border-right-color: #fff;
 	}
+

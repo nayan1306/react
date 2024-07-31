@@ -1,5 +1,6 @@
 
 import './App.css'
+import NdviChart from './LineChart/NdviChart'
 
 function App() {
   
@@ -13,6 +14,9 @@ function App() {
         style={{ border: "none" }}
         title="Draw"
       ></iframe>
+      <hr />
+      <NdviChart/>
+
     </>
   )
 }
