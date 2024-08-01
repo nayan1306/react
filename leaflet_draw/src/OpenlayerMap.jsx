@@ -4,6 +4,7 @@ import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import TileWMS from "ol/source/TileWMS";
+import OSM from "ol/source/OSM"; // Import OpenStreetMap source
 import MousePosition from "ol/control/MousePosition";
 import { defaults as defaultControls } from "ol/control";
 import { createStringXY } from "ol/coordinate";
@@ -24,13 +25,19 @@ function OpenLayerMap() {
       layers: [],
       view: new View({
         projection: projection,
-        center: [23.041597, 72.456573],
-        zoom: 5,
+        center: [78.9629, 20.5937], // Centered on India
+        zoom: 5, // Zoom level to show India
       }),
     });
 
+    // Add a normal OSM layer as the base layer
+    const osmLayer = new TileLayer({
+      source: new OSM(),
+      zIndex: 0,
+    });
+
     // Creating the TileWMS layer with your configuration
-    const layer = new TileLayer({
+    const wmsLayer = new TileLayer({
       source: new TileWMS({
         projection: projection,
         url: "https://vedas.sac.gov.in/ridam_server3/wms",
@@ -48,7 +55,9 @@ function OpenLayerMap() {
       zIndex: 1,
     });
 
-    map.addLayer(layer);
+    // Add both layers to the map
+    map.addLayer(osmLayer);
+    map.addLayer(wmsLayer);
 
     // Cleanup on unmount
     return () => {
