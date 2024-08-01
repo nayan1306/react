@@ -4,7 +4,10 @@ import Map from "ol/Map";
 import View from "ol/View";
 import TileLayer from "ol/layer/Tile";
 import TileWMS from "ol/source/TileWMS";
-import OSM from "ol/source/OSM"; // Import OpenStreetMap source
+import OSM from "ol/source/OSM";
+// import VectorLayer from "ol/layer/Vector";
+// import VectorSource from "ol/source/Vector";
+// import { Draw, Modify } from "ol/interaction";
 import MousePosition from "ol/control/MousePosition";
 import { defaults as defaultControls } from "ol/control";
 import { createStringXY } from "ol/coordinate";
@@ -13,6 +16,7 @@ function OpenLayerMap() {
   useEffect(() => {
     const projection = "EPSG:4326";
 
+    // Initialize the map
     const map = new Map({
       controls: defaultControls().extend([
         new MousePosition({
@@ -26,7 +30,7 @@ function OpenLayerMap() {
       view: new View({
         projection: projection,
         center: [78.9629, 20.5937], // Centered on India
-        zoom: 5, // Zoom level to show India
+        zoom: 5,
       }),
     });
 
@@ -55,9 +59,27 @@ function OpenLayerMap() {
       zIndex: 1,
     });
 
+    // // Create a vector layer to store drawn polygons
+    // const vectorSource = new VectorSource();
+    // const vectorLayer = new VectorLayer({
+    //   source: vectorSource,
+    // });
+
     // Add both layers to the map
     map.addLayer(osmLayer);
     map.addLayer(wmsLayer);
+    // map.addLayer(vectorLayer);
+
+    // // Add drawing interaction for polygons
+    // const draw = new Draw({
+    //   source: vectorSource,
+    //   type: "Polygon",
+    // });
+    // map.addInteraction(draw);
+
+    // // Add modifying interaction for polygons
+    // const modify = new Modify({ source: vectorSource });
+    // map.addInteraction(modify);
 
     // Cleanup on unmount
     return () => {
@@ -67,7 +89,7 @@ function OpenLayerMap() {
 
   return (
     <>
-      <h2>Open Layer Map</h2>
+      <h2>Open Layer Map with NDVI Overlay</h2>
       <div id="map" style={{ width: "100%", height: "800px" }}></div>
       <div id="mouse-position"></div>
     </>
