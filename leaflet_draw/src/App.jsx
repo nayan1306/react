@@ -1,11 +1,15 @@
 
 import './App.css'
 import NdviChart from './LineChart/NdviChart'
+import GmapsPoly from './GmapPoly'
+import OpenLayerMap from './OpenlayerMap'
 
 function App() {
   
   return (
     <>
+      <OpenLayerMap/>
+      <hr />
       <h2>Polygon Drawing map</h2>
       <iframe
         src="/draw/index.html"
@@ -16,6 +20,8 @@ function App() {
       ></iframe>
       <hr />
       <NdviChart/>
+      <hr />
+      <GmapsPoly/>
 
     </>
   )

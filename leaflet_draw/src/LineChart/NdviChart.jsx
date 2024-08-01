@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label, ResponsiveContainer } from 'recharts';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-// import { dummyNdviData } from './dummydata';
 
 function NdviChart() {
   const dummyNdviData = [
@@ -81,18 +80,15 @@ function NdviChart() {
     { "date": "2024-12-26", "ndvi": 0.47 }
   ];
   
-  // State to manage the date range
   const [startDate, setStartDate] = useState(new Date('2024-01-01'));
   const [endDate, setEndDate] = useState(new Date('2024-12-31'));
 
-  // Function to format the date as "Jan 1"
   const formatXAxis = (tickItem) => {
     const date = new Date(tickItem);
     const options = { month: 'short', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
   };
 
-  // Filter the data based on the selected date range
   const filteredData = dummyNdviData.filter(entry => {
     const entryDate = new Date(entry.date);
     return entryDate >= startDate && entryDate <= endDate;
@@ -102,10 +98,7 @@ function NdviChart() {
     <>
       <h2>NDVI Index Over Time</h2>
 
-      {/* Container to position the date pickers and chart side by side */}
       <div style={{ display: 'flex' }}>
-        
-        {/* Date Range Picker on LHS */}
         <div style={{ marginRight: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div>
             <hr />
@@ -129,22 +122,23 @@ function NdviChart() {
           </div>
         </div>
 
-        {/* NDVI Chart */}
-        <LineChart width={1450} height={350} data={filteredData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tickFormatter={formatXAxis} padding={{ left: 50, right: 20 }} />
-          <YAxis domain={[0, 1]}>
-            <Label value="NDVI Index" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
-          </YAxis>
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="ndvi" stroke="#82ca9d" />
-        </LineChart>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={filteredData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tickFormatter={formatXAxis} padding={{ left: 50, right: 20 }} />
+              <YAxis domain={[0, 1]}>
+                <Label value="NDVI Index" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
+              </YAxis>
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="ndvi" stroke="#82ca9d" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </>
   );
-
 }
 
 export default NdviChart;
