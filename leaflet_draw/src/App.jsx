@@ -3,7 +3,8 @@ import './App.css'
 // import NdviChart from './LineChart/NdviChart'
 // import GmapsPoly from './GmapPoly'
 // import OpenLayerMap from './OpenlayerMap'
-import OpenLayerPolygon from './OpenLayerPolygon'
+import OpenLayerPolygon from './OlMap/OpenLayerPolygon'
+// import Ndvidata from './NdviData'
 
 function App() {
   
@@ -13,6 +14,7 @@ function App() {
       <hr />
       <OpenLayerPolygon/>
       <hr />
+      {/* <Ndvidata/> */}
       {/* <h2>Polygon Drawing map</h2>
       <iframe
         src="/draw/index.html"

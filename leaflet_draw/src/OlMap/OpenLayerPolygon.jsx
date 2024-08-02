@@ -15,6 +15,8 @@ import { Vector as VectorLayer } from "ol/layer";
 import { Vector as VectorSource } from "ol/source";
 import { Fill, Stroke, Style } from "ol/style";
 import { click } from "ol/events/condition";
+import styles from './openlayerpolygon.module.css';
+
 
 function OpenLayerMap() {
   const mapRef = useRef(null); // Ref for the map container
@@ -178,12 +180,13 @@ function OpenLayerMap() {
   return (
     <>
       <h2>Open Layer Map</h2>
-      <div id="toolbar">
-        <button onClick={enableDrawing}>Draw Polygon</button>
-        <button onClick={enableModifying}>Edit Polygon</button>
-        <button onClick={enableDeleting}>Delete Polygon</button>
+      <div id="map" ref={mapRef} style={{ position: 'relative', width: "100%", height: "800px" }}>
+        <div id="toolbar" className={styles.toolbar}>
+          <button className={styles.button} onClick={enableDrawing}>Draw Polygon</button>
+          <button className={styles.button} onClick={enableModifying}>Edit Polygon</button>
+          <button className={styles.button} onClick={enableDeleting}>Delete Polygon</button>
+        </div>
       </div>
-      <div id="map" ref={mapRef} style={{ width: "100%", height: "800px" }}></div>
       <div id="mouse-position"></div>
     </>
   );
