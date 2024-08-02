@@ -17,6 +17,15 @@ import { Fill, Stroke, Style } from "ol/style";
 import { click } from "ol/events/condition";
 import styles from './openlayerpolygon.module.css';
 
+// Function to generate random color
+const getRandomColor = () => {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
 
 function OpenLayerMap() {
   const mapRef = useRef(null); // Ref for the map container
@@ -35,7 +44,7 @@ function OpenLayerMap() {
 
     if (mapInstance.current) return; // Avoid re-initializing if map is already created
 
-    // Initialize the view only once
+    // Initialize the view
     const initialView = new View({
       projection: "EPSG:4326",
       center: [78.9629, 20.5937], // Centered on India
@@ -83,15 +92,18 @@ function OpenLayerMap() {
     // Add vector layer for polygons
     const vectorLayer = new VectorLayer({
       source: vectorSourceRef.current,
-      style: new Style({
-        fill: new Fill({
-          color: 'rgba(255, 255, 255, 0.2)',
-        }),
-        stroke: new Stroke({
-          color: '#ffcc33',
-          width: 2,
-        }),
-      }),
+      style: (feature) => {
+        const color = feature.get('color') || '#FF0000'; // Default to red if no color is set
+        return new Style({
+          fill: new Fill({
+            color: 'rgba(255, 255, 255, 0)', // Fully transparent fill
+          }),
+          stroke: new Stroke({
+            color: color, // Border color
+            width: 4, // Border width
+          }),
+        });
+      },
       zIndex: 2,
     });
 
@@ -132,7 +144,84 @@ function OpenLayerMap() {
 
     map.on('click', handleDeleteFeature);
 
+    // Update draw interaction to set color for new polygons
+    drawInteraction.current.on('drawend', (event) => {
+      const feature = event.feature;
+      feature.set('color', getRandomColor()); // Assign random color
+    });
+
     mapInstance.current = map;
+
+    // Add the blur effect to the map
+    const overlay = document.createElement('div');
+    overlay.id = 'map-overlay';
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.pointerEvents = 'none';
+
+    // Apply a blur effect to the overlay
+    overlay.style.background = 'url(https://maps.googleapis.com/maps/api/staticmap?center=20.5937,78.9629&zoom=5&size=600x800&key=YOUR_API_KEY)'; // This is a placeholder URL, replace with your map URL or base64 encoded image
+    overlay.style.backgroundSize = 'cover';
+    overlay.style.filter = 'blur(10px)'; // Adjust blur strength as needed
+
+    // Append the overlay to the map container
+    const mapContainer = document.getElementById('map');
+    mapContainer.appendChild(overlay);
+
+    // Draw polygons on a separate canvas
+    const canvas = document.createElement('canvas');
+    canvas.id = 'polygon-canvas';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none'; // Ensure canvas doesn't capture mouse events
+
+    mapContainer.appendChild(canvas);
+
+    const ctx = canvas.getContext('2d');
+    const updateCanvasSize = () => {
+      const mapSize = map.getSize();
+      canvas.width = mapSize[0];
+      canvas.height = mapSize[1];
+    };
+
+    // Update canvas size on map resize
+    map.on('resize', updateCanvasSize);
+    updateCanvasSize();
+
+    // Draw polygons on the canvas
+    const drawPolygonsOnCanvas = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      vectorSourceRef.current.forEachFeature((feature) => {
+        const geometry = feature.getGeometry();
+        const coordinates = geometry.getCoordinates();
+        const color = feature.get('color') || '#FF0000';
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+
+        coordinates[0].forEach(([x, y], index) => {
+          const [px, py] = map.getPixelFromCoordinate([x, y]);
+          if (index === 0) {
+            ctx.moveTo(px, py);
+          } else {
+            ctx.lineTo(px, py);
+          }
+        });
+        ctx.closePath();
+        ctx.stroke();
+      });
+    };
+
+    drawPolygonsOnCanvas();
+    map.on('moveend', drawPolygonsOnCanvas);
 
     // Cleanup on unmount
     return () => {
@@ -143,6 +232,12 @@ function OpenLayerMap() {
         mapInstance.current.un('click', handleDeleteFeature);
         mapInstance.current.setTarget(null); // Properly remove map target on unmount
         mapInstance.current = null; // Clear map instance reference
+      }
+      if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+      }
+      if (canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas);
       }
     };
   }, []);
