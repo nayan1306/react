@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import "./ol.css";
 import Map from "ol/Map";
 import View from "ol/View";
@@ -19,11 +19,11 @@ import { click } from "ol/events/condition";
 function OpenLayerMap() {
   const mapRef = useRef(null); // Ref for the map container
   const vectorSourceRef = useRef(new VectorSource());
-  const mapRefCurrent = useRef(null);
-  const [drawInteraction, setDrawInteraction] = useState(null);
-  const [modifyInteraction, setModifyInteraction] = useState(null);
-  const [selectInteraction, setSelectInteraction] = useState(null);
-  const [deleteMode, setDeleteMode] = useState(false);
+  const mapInstance = useRef(null); // Ref for the map instance
+  const drawInteraction = useRef(null);
+  const modifyInteraction = useRef(null);
+  const selectInteraction = useRef(null);
+  const deleteModeRef = useRef(false);
 
   useEffect(() => {
     if (!mapRef.current) {
@@ -31,40 +31,43 @@ function OpenLayerMap() {
       return;
     }
 
-    const projection = "EPSG:4326";
+    if (mapInstance.current) return; // Avoid re-initializing if map is already created
+
+    // Initialize the view only once
+    const initialView = new View({
+      projection: "EPSG:4326",
+      center: [78.9629, 20.5937], // Centered on India
+      zoom: 5,
+    });
 
     // Initialize the map
     const map = new Map({
       controls: defaultControls().extend([
         new MousePosition({
           coordinateFormat: createStringXY(4),
-          projection: projection,
+          projection: "EPSG:4326",
           target: document.getElementById("mouse-position"),
         }),
       ]),
-      target: mapRef.current, // Use ref for the map container
-      view: new View({
-        projection: projection,
-        center: [78.9629, 20.5937], // Centered on India
-        zoom: 5, // Zoom level to show India
-      }),
+      target: mapRef.current,
+      view: initialView,
     });
 
     // Add OpenStreetMap layer
     const osmLayer = new TileLayer({
       source: new OSM(),
-      zIndex: 0, // Ensure this is below vector layer
+      zIndex: 0,
     });
 
     // Add WMS layer
     const wmsLayer = new TileLayer({
       source: new TileWMS({
-        projection: projection,
+        projection: "EPSG:4326",
         url: "https://vedas.sac.gov.in/ridam_server3/wms",
         params: {
           name: "RDSGrdient",
           layers: "T0S0M0",
-          PROJECTION: projection,
+          PROJECTION: "EPSG:4326",
           ARGS: "merge_method:max;dataset_id:T3S1P1;from_time:20240705;to_time:20240725;indexes:1",
           styles:
             "[0:FFFFFF00:1:f0ebecFF:25:d8c4b6FF:50:ab8a75FF:75:917732FF:100:70ab06FF:125:459200FF:150:267b01FF:175:0a6701FF:200:004800FF:251:001901FF;nodata:FFFFFF00]",
@@ -72,7 +75,7 @@ function OpenLayerMap() {
         },
       }),
       opacity: 1,
-      zIndex: 1, // Ensure this is below vector layer
+      zIndex: 1,
     });
 
     // Add vector layer for polygons
@@ -87,96 +90,88 @@ function OpenLayerMap() {
           width: 2,
         }),
       }),
-      zIndex: 2, // Ensure this is on top of other layers
+      zIndex: 2,
     });
 
-    // Add layers to the map
     map.addLayer(osmLayer);
     map.addLayer(wmsLayer);
     map.addLayer(vectorLayer);
 
-    // Initialize the draw interaction
-    const draw = new Draw({
+    // Initialize interactions
+    drawInteraction.current = new Draw({
       source: vectorSourceRef.current,
       type: 'Polygon',
     });
 
-    // Initialize the modify interaction
-    const modify = new Modify({
+    modifyInteraction.current = new Modify({
       source: vectorSourceRef.current,
     });
 
-    // Initialize the select interaction
-    const select = new Select({
+    selectInteraction.current = new Select({
       condition: click,
       layers: [vectorLayer],
     });
 
     // Add interactions to the map
-    map.addInteraction(draw);
-    map.addInteraction(modify);
-    map.addInteraction(select);
+    map.addInteraction(drawInteraction.current);
+    map.addInteraction(modifyInteraction.current);
+    map.addInteraction(selectInteraction.current);
 
     // Handle feature deletion on click
-    map.on('click', (e) => {
-      if (deleteMode) {
-        const feature = map.getFeaturesAtPixel(e.pixel)[0];
-        if (feature) {
+    const handleDeleteFeature = (e) => {
+      if (deleteModeRef.current) {
+        const features = map.getFeaturesAtPixel(e.pixel);
+        if (features.length > 0) {
+          const feature = features[0];
           vectorSourceRef.current.removeFeature(feature);
         }
       }
-    });
+    };
 
-    // Save references to interactions for later use
-    setDrawInteraction(draw);
-    setModifyInteraction(modify);
-    setSelectInteraction(select);
-    mapRefCurrent.current = map;
+    map.on('click', handleDeleteFeature);
+
+    mapInstance.current = map;
 
     // Cleanup on unmount
     return () => {
-      if (mapRefCurrent.current) {
-        mapRefCurrent.current.setTarget(null); // Properly remove map target on unmount
+      if (mapInstance.current) {
+        mapInstance.current.removeInteraction(drawInteraction.current);
+        mapInstance.current.removeInteraction(modifyInteraction.current);
+        mapInstance.current.removeInteraction(selectInteraction.current);
+        mapInstance.current.un('click', handleDeleteFeature);
+        mapInstance.current.setTarget(null); // Properly remove map target on unmount
+        mapInstance.current = null; // Clear map instance reference
       }
     };
-  }, [deleteMode]);
+  }, []);
 
   // Function to enable drawing
   const enableDrawing = () => {
-    if (mapRefCurrent.current) {
-      mapRefCurrent.current.removeInteraction(drawInteraction);
-      mapRefCurrent.current.addInteraction(drawInteraction);
-      if (modifyInteraction) {
-        mapRefCurrent.current.removeInteraction(modifyInteraction);
-      }
-      if (selectInteraction) {
-        mapRefCurrent.current.removeInteraction(selectInteraction);
-      }
-      setDeleteMode(false); // Ensure delete mode is off
+    if (mapInstance.current) {
+      mapInstance.current.removeInteraction(modifyInteraction.current);
+      mapInstance.current.removeInteraction(selectInteraction.current);
+      mapInstance.current.addInteraction(drawInteraction.current);
+      deleteModeRef.current = false; // Ensure delete mode is off
     }
   };
 
   // Function to enable modifying
   const enableModifying = () => {
-    if (mapRefCurrent.current) {
-      mapRefCurrent.current.removeInteraction(drawInteraction);
-      mapRefCurrent.current.addInteraction(modifyInteraction);
-      if (selectInteraction) {
-        mapRefCurrent.current.removeInteraction(selectInteraction);
-      }
-      setDeleteMode(false); // Ensure delete mode is off
+    if (mapInstance.current) {
+      mapInstance.current.removeInteraction(drawInteraction.current);
+      mapInstance.current.removeInteraction(selectInteraction.current);
+      mapInstance.current.addInteraction(modifyInteraction.current);
+      deleteModeRef.current = false; // Ensure delete mode is off
     }
   };
 
   // Function to enable deleting
   const enableDeleting = () => {
-    if (mapRefCurrent.current) {
-      mapRefCurrent.current.removeInteraction(drawInteraction);
-      mapRefCurrent.current.removeInteraction(modifyInteraction);
-      if (selectInteraction) {
-        mapRefCurrent.current.addInteraction(selectInteraction);
-      }
-      setDeleteMode(true); // Enable delete mode
+    if (mapInstance.current) {
+      mapInstance.current.removeInteraction(drawInteraction.current);
+      mapInstance.current.removeInteraction(modifyInteraction.current);
+      mapInstance.current.addInteraction(selectInteraction.current);
+      deleteModeRef.current = true; // Enable delete mode
     }
   };
 
