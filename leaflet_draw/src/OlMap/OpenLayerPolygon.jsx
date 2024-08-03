@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./ol.css";
 import Map from "ol/Map";
 import View from "ol/View";
@@ -35,6 +35,7 @@ function OpenLayerMap() {
   const modifyInteraction = useRef(null);
   const selectInteraction = useRef(null);
   const deleteModeRef = useRef(false);
+  const [polygonFeatures, setPolygonFeatures] = useState([]);
 
   useEffect(() => {
     if (!mapRef.current) {
@@ -44,14 +45,12 @@ function OpenLayerMap() {
 
     if (mapInstance.current) return; // Avoid re-initializing if map is already created
 
-    // Initialize the view
     const initialView = new View({
       projection: "EPSG:4326",
       center: [78.9629, 20.5937], // Centered on India
       zoom: 5,
     });
 
-    // Initialize the map
     const map = new Map({
       controls: defaultControls().extend([
         new MousePosition({
@@ -80,8 +79,7 @@ function OpenLayerMap() {
           layers: "T0S0M0",
           PROJECTION: "EPSG:4326",
           ARGS: "merge_method:max;dataset_id:T3S1P1;from_time:20240705;to_time:20240725;indexes:1",
-          styles:
-            "[0:FFFFFF00:1:f0ebecFF:25:d8c4b6FF:50:ab8a75FF:75:917732FF:100:70ab06FF:125:459200FF:150:267b01FF:175:0a6701FF:200:004800FF:251:001901FF;nodata:FFFFFF00]",
+          styles: "[0:FFFFFF00:1:f0ebecFF:25:d8c4b6FF:50:ab8a75FF:75:917732FF:100:70ab06FF:125:459200FF:150:267b01FF:175:0a6701FF:200:004800FF:251:001901FF;nodata:FFFFFF00]",
           LEGEND_OPTIONS: "columnHeight:400;height:100",
         },
       }),
@@ -138,6 +136,7 @@ function OpenLayerMap() {
         if (features.length > 0) {
           const feature = features[0];
           vectorSourceRef.current.removeFeature(feature);
+          updatePolygonFeatures(); // Update the features after deletion
         }
       }
     };
@@ -148,80 +147,19 @@ function OpenLayerMap() {
     drawInteraction.current.on('drawend', (event) => {
       const feature = event.feature;
       feature.set('color', getRandomColor()); // Assign random color
+      updatePolygonFeatures(); // Update the features after drawing
     });
 
-    mapInstance.current = map;
-
-    // Add the blur effect to the map
-    const overlay = document.createElement('div');
-    overlay.id = 'map-overlay';
-    overlay.style.position = 'absolute';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100%';
-    overlay.style.height = '100%';
-    overlay.style.pointerEvents = 'none';
-
-    // Apply a blur effect to the overlay
-    overlay.style.background = 'url(https://maps.googleapis.com/maps/api/staticmap?center=20.5937,78.9629&zoom=5&size=600x800&key=YOUR_API_KEY)'; // This is a placeholder URL, replace with your map URL or base64 encoded image
-    overlay.style.backgroundSize = 'cover';
-    overlay.style.filter = 'blur(10px)'; // Adjust blur strength as needed
-
-    // Append the overlay to the map container
-    const mapContainer = document.getElementById('map');
-    mapContainer.appendChild(overlay);
-
-    // Draw polygons on a separate canvas
-    const canvas = document.createElement('canvas');
-    canvas.id = 'polygon-canvas';
-    canvas.style.position = 'absolute';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none'; // Ensure canvas doesn't capture mouse events
-
-    mapContainer.appendChild(canvas);
-
-    const ctx = canvas.getContext('2d');
-    const updateCanvasSize = () => {
-      const mapSize = map.getSize();
-      canvas.width = mapSize[0];
-      canvas.height = mapSize[1];
-    };
-
-    // Update canvas size on map resize
-    map.on('resize', updateCanvasSize);
-    updateCanvasSize();
-
-    // Draw polygons on the canvas
-    const drawPolygonsOnCanvas = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    // Update the polygon features for masking
+    const updatePolygonFeatures = () => {
+      const features = [];
       vectorSourceRef.current.forEachFeature((feature) => {
-        const geometry = feature.getGeometry();
-        const coordinates = geometry.getCoordinates();
-        const color = feature.get('color') || '#FF0000';
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-
-        coordinates[0].forEach(([x, y], index) => {
-          const [px, py] = map.getPixelFromCoordinate([x, y]);
-          if (index === 0) {
-            ctx.moveTo(px, py);
-          } else {
-            ctx.lineTo(px, py);
-          }
-        });
-        ctx.closePath();
-        ctx.stroke();
+        features.push(feature);
       });
+      setPolygonFeatures(features);
     };
 
-    drawPolygonsOnCanvas();
-    map.on('moveend', drawPolygonsOnCanvas);
+    mapInstance.current = map;
 
     // Cleanup on unmount
     return () => {
@@ -233,16 +171,76 @@ function OpenLayerMap() {
         mapInstance.current.setTarget(null); // Properly remove map target on unmount
         mapInstance.current = null; // Clear map instance reference
       }
-      if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
-      }
-      if (canvas.parentNode) {
-        canvas.parentNode.removeChild(canvas);
-      }
     };
   }, []);
 
-  // Function to enable drawing
+  useEffect(() => {
+    if (!mapRef.current || polygonFeatures.length === 0) return;
+  
+    // Create a canvas element for masking
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+  
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    
+    mapRef.current.appendChild(canvas);
+  
+    const resizeCanvas = () => {
+      canvas.width = mapRef.current.clientWidth;
+      canvas.height = mapRef.current.clientHeight;
+      drawMask(); // Redraw the mask on resize
+    };
+  
+    // Function to draw the mask on the canvas
+    const drawMask = () => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+  
+      // Fill the entire canvas with a semi-transparent color
+      context.fillStyle = 'rgba(0, 0, 0, 0.6)'; // Black mask with 50% opacity
+      context.fillRect(0, 0, canvas.width, canvas.height);
+  
+      // Set the composite operation to "destination-out" to make the inside of polygons transparent
+      context.globalCompositeOperation = 'destination-out';
+  
+      polygonFeatures.forEach((feature) => {
+        const coordinates = feature.getGeometry().getCoordinates()[0];
+        context.beginPath();
+        coordinates.forEach(([x, y], index) => {
+          const [px, py] = mapInstance.current.getPixelFromCoordinate([x, y]);
+          index === 0 ? context.moveTo(px, py) : context.lineTo(px, py);
+        });
+        context.closePath();
+        context.fill(); // Make the inside of the polygon transparent
+      });
+  
+      // Reset the composite operation to the default
+      context.globalCompositeOperation = 'source-over';
+    };
+  
+    // Redraw the mask when the map is moved or zoomed
+    mapInstance.current.on('moveend', drawMask);
+  
+    // Initial draw
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+  
+    // Cleanup on unmount
+    return () => {
+      if (canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas);
+      }
+      window.removeEventListener('resize', resizeCanvas);
+      mapInstance.current.un('moveend', drawMask);
+    };
+  }, [polygonFeatures]);
+
+  
+
   const enableDrawing = () => {
     if (mapInstance.current) {
       mapInstance.current.removeInteraction(modifyInteraction.current);
@@ -252,7 +250,6 @@ function OpenLayerMap() {
     }
   };
 
-  // Function to enable modifying
   const enableModifying = () => {
     if (mapInstance.current) {
       mapInstance.current.removeInteraction(drawInteraction.current);
@@ -262,7 +259,6 @@ function OpenLayerMap() {
     }
   };
 
-  // Function to enable deleting
   const enableDeleting = () => {
     if (mapInstance.current) {
       mapInstance.current.removeInteraction(drawInteraction.current);
