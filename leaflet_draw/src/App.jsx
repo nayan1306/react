@@ -3,7 +3,7 @@ import './App.css'
 // import NdviChart from './LineChart/NdviChart'
 // import GmapsPoly from './GmapPoly'
 // import OpenLayerMap from './OpenlayerMap'
-import OpenLayerPolygon from './OlMap/OpenLayerPolygon'
+import MapComponent from './OlMap/MapComponent'
 // import Ndvidata from './NdviData'
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
     <>
       {/* <OpenLayerMap/> */}
       <hr />
-      <OpenLayerPolygon/>
+      <MapComponent/>
       <hr />
       {/* <Ndvidata/> */}
       {/* <h2>Polygon Drawing map</h2>
